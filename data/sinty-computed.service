@@ -1,0 +1,10 @@
+[Unit]
+Description=Sinty Compute
+
+[Service]
+Type=dbus
+BusName=dev.sinty.Compute
+ExecStart=/usr/libexec/sinty-computed
+
+[Install]
+WantedBy=graphical.target

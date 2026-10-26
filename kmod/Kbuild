@@ -1,0 +1,1 @@
+obj-m += sinty_compute.o
