@@ -82,11 +82,11 @@ fn installed() bool {
 }
 
 fn modprobe(remove: bool) bool {
-    var argv = [_:null]?[*:0]const u8{ "modprobe", "-r", "sinty_compute" };
-    if (!remove) argv = .{ "modprobe", "sinty_compute", null };
+    var argv = [_:null]?[*:0]const u8{ "/usr/sbin/modprobe", "-r", "sinty_compute" };
+    if (!remove) argv = .{ "/usr/sbin/modprobe", "sinty_compute", null };
     var status: c_int = 0;
     var err: [*c]c.GError = null;
-    if (c.g_spawn_sync(null, @ptrCast(@constCast(&argv)), null, c.G_SPAWN_SEARCH_PATH, null, null, null, null, &status, &err) == 0) {
+    if (c.g_spawn_sync(null, @ptrCast(@constCast(&argv)), null, c.G_SPAWN_DEFAULT, null, null, null, null, &status, &err) == 0) {
         std.log.warn("modprobe: {s}", .{if (err) |e| std.mem.span(e.*.message) else "failed"});
         c.g_clear_error(&err);
         return false;
@@ -206,7 +206,8 @@ fn byPolkit(src: [*c]c.GObject, res: ?*c.GAsyncResult, data: c.gpointer) callcon
     var err: [*c]c.GError = null;
     const reply = c.g_dbus_connection_call_finish(@ptrCast(@alignCast(src)), res, &err);
     if (reply == null) {
-        const missing = err != null and c.g_error_matches(err, c.g_dbus_error_quark(), c.G_DBUS_ERROR_SERVICE_UNKNOWN) != 0;
+        const missing = err != null and (c.g_error_matches(err, c.g_dbus_error_quark(), c.G_DBUS_ERROR_SERVICE_UNKNOWN) != 0 or
+            c.g_error_matches(err, c.g_dbus_error_quark(), c.G_DBUS_ERROR_NAME_HAS_NO_OWNER) != 0);
         c.g_clear_error(&err);
         if (!missing) return finish(call, false);
         const sender = c.g_dbus_method_invocation_get_sender(call.invocation);
