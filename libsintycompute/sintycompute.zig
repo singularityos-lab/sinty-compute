@@ -33,6 +33,16 @@ const IOC_REPORT = linux.IOCTL.IOW(MAGIC, 5, Report);
 
 const STATE_ENABLED: u32 = 0x100;
 
+pub const SINTY_COMPUTE_MEASURE: u32 = 0;
+pub const SINTY_COMPUTE_ACTIVE: u32 = 1;
+pub const SINTY_COMPUTE_VERIFY: u32 = 2;
+
+pub const reuse = @import("reuse.zig");
+
+comptime {
+    _ = reuse;
+}
+
 fn rc(r: usize) c_int {
     const e = linux.errno(r);
     return if (e == .SUCCESS) 0 else -@as(c_int, @intCast(@intFromEnum(e)));
