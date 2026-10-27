@@ -210,14 +210,23 @@ fn byPolkit(src: [*c]c.GObject, res: ?*c.GAsyncResult, data: c.gpointer) callcon
             c.g_error_matches(err, c.g_dbus_error_quark(), c.G_DBUS_ERROR_NAME_HAS_NO_OWNER) != 0);
         c.g_clear_error(&err);
         if (!missing) return finish(call, false);
-        const sender = c.g_dbus_method_invocation_get_sender(call.invocation);
-        return c.g_dbus_connection_call(connection, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetConnectionUnixUser", c.g_variant_new("(s)", sender), vt("(u)"), c.G_DBUS_CALL_FLAGS_NONE, -1, null, byUser, call);
+        return checkUser(call);
     }
     defer c.g_variant_unref(reply);
     var ok: c.gboolean = 0;
     var challenge: c.gboolean = 0;
     c.g_variant_get(reply, "((bba{ss}))", &ok, &challenge, @as(?*anyopaque, null));
+    if (ok == 0 and !sessionTracking()) return checkUser(call);
     finish(call, ok != 0);
+}
+
+fn sessionTracking() bool {
+    return c.g_file_test("/run/systemd/seats", c.G_FILE_TEST_IS_DIR) != 0;
+}
+
+fn checkUser(call: *Call) void {
+    const sender = c.g_dbus_method_invocation_get_sender(call.invocation);
+    c.g_dbus_connection_call(connection, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetConnectionUnixUser", c.g_variant_new("(s)", sender), vt("(u)"), c.G_DBUS_CALL_FLAGS_NONE, -1, null, byUser, call);
 }
 
 fn authorize(inv: *c.GDBusMethodInvocation, method: [*c]const u8, params: ?*c.GVariant) void {
