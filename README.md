@@ -18,7 +18,9 @@ which only shows it when the kernel module is installed.
   invalidation rules against the running kernel.
 - `cmd/sinty-computed`: the system service behind the Settings switch. It loads
   and unloads the module, sets the mode and keeps the choice across reboots.
-  Changes require the `dev.sinty.compute.manage` polkit action.
+  Changes require the `dev.sinty.compute.manage` polkit action. Without logind,
+  where polkit sees no active session, local users with a uid from 1000 to 59999
+  are allowed instead.
 
 ## Modes
 
